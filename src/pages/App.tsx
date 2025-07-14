@@ -5,7 +5,12 @@ import AppContextProvider from '../components/infrastructure/AppContextProvider.
 import NavigationProvider from '../components/infrastructure/NavigationProvider.js';
 import { navigationElements, getImportableView } from '../navigation/navigationElements.js';
 import RouterPage from './RouterPage.js';
+import { TetrominosGameService } from './../services/tetrominosGameService.ts';
+import { ServiceKeys } from '../services/serviceKeys.js';
 import { ThemeKeys, DarkTheme, LightTheme } from './../styles/index.js';
+
+// Types
+import type { IService } from './../services/infrastructure/serviceTypes.js';
 
 // Styles
 import './../styles/app.style.css';
@@ -31,6 +36,17 @@ const App: React.FC = () => {
 
   const handleThemeChange = (themeName: string) => {
     setThemeName(themeName);
+  };
+
+  const handleInjectServices = () => {
+
+    const services: Array<IService> = [];
+
+    // Tetrominos Game Service
+    const tetrominosGameService = new TetrominosGameService(ServiceKeys.TetrominosGameService);
+    services.push(tetrominosGameService);
+
+    return services;
   };
 
   const renderFallback = () => {
@@ -71,6 +87,7 @@ const App: React.FC = () => {
           fallback={renderFallback()}>
 
           <AppContextProvider
+            onInjectServices={handleInjectServices}
             onThemeChange={handleThemeChange}>
 
             <NavigationProvider

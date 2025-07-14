@@ -1,15 +1,16 @@
 import React, { useRef, useState, useEffect } from 'react';
+import { ServiceProvider } from '../../services/infrastructure/serviceProvider.js';
 import { ThemeKeys } from '../../styles/index.js';
 
+// Types
+import type { IService } from '../../services/infrastructure/serviceTypes.js';
+
 export class SettingKeys {
-  public static EnablePathPrediction = 'EnablePathPrediction';
-  public static ShowDataOverlayOnMap = 'ShowDataOverlayOnMap';
+
 };
 
 const getDefaultSettings = () => {
   return {
-    [SettingKeys.EnablePathPrediction]: true,
-    [SettingKeys.ShowDataOverlayOnMap]: true
   };
 };
 
@@ -17,6 +18,7 @@ const getDefaultSettings = () => {
 export interface AppContextProps {
   hasConnectionErrors: boolean;
   activeThemeName: string;
+  getService: <T extends IService>(serviceKey: string) => T | undefined;
   changeTheme: (themeName: string) => void;
   pushSetting: (key: string, value: any) => boolean;
   pullSetting: (key: string) => any;
@@ -26,6 +28,7 @@ export interface AppContextProps {
 export const AppContext = React.createContext<AppContextProps>({
   hasConnectionErrors: false,
   activeThemeName: ThemeKeys.DarkTheme,
+  getService: () => undefined,
   changeTheme: (themeName: string) => { },
   pushSetting: (key: string, value: any) => false,
   pullSetting: (key: string) => undefined
@@ -34,6 +37,7 @@ export const AppContext = React.createContext<AppContextProps>({
 interface ILocalProps {
   children?: React.ReactNode;
   onThemeChange?: (themeName: string) => void;
+  onInjectServices?: () => Array<IService>;
 };
 type Props = ILocalProps;
 
@@ -41,6 +45,9 @@ const AppContextProvider: React.FC<Props> = (props) => {
 
   // Fields
   const contextName: string = 'AppContextProvider'
+
+  // Refs
+  const serviceProviderRef = useRef<ServiceProvider>(new ServiceProvider());
 
   // States
   const [hasConnectionErrors, setConnectionErrors,] = useState(false);
@@ -51,10 +58,17 @@ const AppContextProvider: React.FC<Props> = (props) => {
   useEffect(() => {
 
     // Mount
+    if (props.onInjectServices) {
+
+      var servicesToInject = props.onInjectServices();
+      servicesToInject.forEach(service => serviceProviderRef.current.addService(service, service.key))
+    }
+
+    serviceProviderRef.current.startServices();
 
     // Unmount
     return () => {
-
+      serviceProviderRef.current.stopServices();
     }
   }, []);
 
@@ -88,6 +102,7 @@ const AppContextProvider: React.FC<Props> = (props) => {
         {
           hasConnectionErrors: hasConnectionErrors,
           activeThemeName: activeThemeName,
+          getService: serviceProviderRef.current.getService,
           changeTheme: handleThemeChange,
           pushSetting: handlePushSetting,
           pullSetting: handlePullSetting
