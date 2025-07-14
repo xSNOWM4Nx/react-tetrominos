@@ -1,12 +1,33 @@
-import React, { useContext, useState, useEffect } from 'react';
+import React, { useContext, useState, useRef, useEffect } from 'react';
 import { Box } from '@mui/material';
 import { AppContext, SettingKeys } from '../components/infrastructure/AppContextProvider.js';
 import { ServiceKeys } from './../services/serviceKeys.js';
+import { GameStateEnumeration, createEmptyData } from '../tetrominos/types.js';
 import { BOARD_HEIGHT, VISIBLE_BOARD_HEIGHT, BOARD_WIDTH, HIDDEN_ROWS } from '../tetrominos/constants.js';
 
 // Types
-import type { Cell } from "../tetrominos/types.js";
+import type { GameData, Cell, Tetromino, TetrominoType } from "../tetrominos/types.js";
 import type { ITetrominosGameService } from '../services/tetrominosGameService.ts';
+
+function isTetrominoCell(
+  tetromino: Tetromino | null,
+  cellRow: number,
+  cellCol: number
+): { value: TetrominoType, color: string } | null {
+  if (!tetromino) return null;
+  for (let y = 0; y < 4; y++) {
+    for (let x = 0; x < 4; x++) {
+      if (tetromino.shape[y][x]) {
+        const boardY = tetromino.y + y - HIDDEN_ROWS;
+        const boardX = tetromino.x + x;
+        if (boardY === cellRow && boardX === cellCol) {
+          return { value: tetromino.type, color: tetromino.color };
+        }
+      }
+    }
+  }
+  return null;
+};
 
 interface ILocalProps {
 
@@ -20,16 +41,11 @@ export const GameBoard: React.FC<Props> = (props) => {
   const tetrominosGameService = appContext.getService<ITetrominosGameService>(ServiceKeys.TetrominosGameService);
 
   // States
-  const [board, setBoard] = useState<Cell[][]>(() => {
-    return Array.from({ length: VISIBLE_BOARD_HEIGHT }, () =>
-      Array.from({ length: BOARD_WIDTH }, () => ({
-        value: null,
-        color: null,
-        ghost: false
-      }))
-    );
-  });
+  const [gameDataVersion, setGameDataVersion] = useState(0);
   const [cellSize, setCellSize] = useState(32);
+
+  // const gameDataRef = useRef<GameData>(gameData);
+  // gameDataRef.current = gameData;
 
   // Effects
   useEffect(() => {
@@ -51,16 +67,21 @@ export const GameBoard: React.FC<Props> = (props) => {
     if (!tetrominosGameService)
       return undefined;
 
-    setBoard(tetrominosGameService.getBoard().slice(HIDDEN_ROWS));
-    const key = tetrominosGameService.onGameBoardUpdated("GameBoard", (newBoard) => {
-      setBoard(newBoard.slice(HIDDEN_ROWS));
+    const key = tetrominosGameService.onGameBoardUpdated("GameBoard", (newGameDataVersion) => {
+      setGameDataVersion(newGameDataVersion);
     });
 
-    return () => { tetrominosGameService.offGameBoardUpdated(key); };
+    tetrominosGameService.startGame();
+
+    return () => {
+      tetrominosGameService.offGameBoardUpdated(key);
+    };
   }, [tetrominosGameService]);
 
   const boardWidthPx = cellSize * BOARD_WIDTH;
   const boardHeightPx = cellSize * VISIBLE_BOARD_HEIGHT;
+  const gameData = tetrominosGameService ? tetrominosGameService.getGameData() : createEmptyData(VISIBLE_BOARD_HEIGHT, BOARD_WIDTH);
+  const board: Cell[][] = gameData.board.slice(HIDDEN_ROWS);
 
   return (
     <Box
@@ -87,19 +108,25 @@ export const GameBoard: React.FC<Props> = (props) => {
         }}>
 
         {board.map((row, rowIdx) =>
-          row.map((cell, colIdx) => (
-            <Box
-              key={`${rowIdx}-${colIdx}`}
-              sx={{
-                width: cellSize,
-                height: cellSize,
-                boxSizing: "border-box",
-                border: "1px solid #333",
-                background: cell.value ? cell.color || "#fff" : "#111",
-                transition: "background 0.1s",
-              }}
-            />
-          ))
+          row.map((cell, colIdx) => {
+
+            const tetrominoCell = isTetrominoCell(gameData.activeTetromino, rowIdx, colIdx);
+            const displayColor = tetrominoCell ? tetrominoCell.color : cell.value ? cell.color : "#111";
+
+            return (
+              <Box
+                key={`${rowIdx}-${colIdx}`}
+                sx={{
+                  width: cellSize,
+                  height: cellSize,
+                  boxSizing: "border-box",
+                  border: "1px solid #333",
+                  background: displayColor,
+                  transition: "background 0.1s",
+                }}
+              />
+            );
+          })
         )}
 
       </Box>
