@@ -2,7 +2,9 @@ import React, { useContext } from 'react'
 import { Box } from '@mui/material';
 import { AppContext, SettingKeys } from '../components/infrastructure/AppContextProvider.js';
 import { ViewKeys } from './viewKeys.js';
-import GameBoard from '../components/GameBoard.tsx';
+import GameControl from '../components/GameControl.js';
+import GameBoard from '../components/GameBoard.js';
+import GameStats from '../components/GameStats.js';
 
 // Types
 import type { SelectChangeEvent } from '@mui/material';
@@ -30,26 +32,31 @@ const GameViewMemoized: React.FC<Props> = (props) => {
         flexDirection: 'column',
       }}>
 
+      {/* Top spacer */}
+      <Box sx={{ height: (theme) => theme.spacing(2) }} />
+
       <Box
         sx={{
-          height: '100%',
+          // height: '100%',
           flex: 'auto',
           display: 'flex',
           flexDirection: 'row',
           justifyContent: 'center',
-          alignItems: 'center',
-          backgroundColor: 'yellow'
+          alignItems: 'center'
         }}>
 
         <Box
           sx={{
             height: '100%',
-            flex: '0 0 200px',
-            display: 'flex',
-            backgroundColor: 'green'
+            flex: '0 0 240px',
+            minWidth: 180
           }}>
 
+          <GameControl />
         </Box>
+
+        {/* Spacer */}
+        <Box sx={{ width: (theme) => theme.spacing(2) }} />
 
         <Box
           sx={{
@@ -57,24 +64,28 @@ const GameViewMemoized: React.FC<Props> = (props) => {
             flex: '0 0 auto',
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'center',
-            backgroundColor: 'red'
+            justifyContent: 'center'
           }}>
 
           <GameBoard />
         </Box>
 
+        {/* Spacer */}
+        <Box sx={{ width: (theme) => theme.spacing(2) }} />
+
         <Box
           sx={{
             height: '100%',
             flex: '0 0 240px',
-            minWidth: 180,
-            backgroundColor: 'blue'
+            minWidth: 180
           }}>
-
+          <GameStats />
         </Box>
 
       </Box>
+
+      {/* Bottom spacer */}
+      <Box sx={{ height: (theme) => theme.spacing(2) }} />
 
     </Box>
   );

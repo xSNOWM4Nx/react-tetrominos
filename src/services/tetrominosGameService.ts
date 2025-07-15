@@ -1,7 +1,7 @@
 import { Service } from './infrastructure/service.js';
 import { BOARD_HEIGHT, BOARD_WIDTH } from '../tetrominos/constants.js';
-import { GameStateEnumeration } from '../tetrominos/types.js';
-import { createEmptyData, createTetromino, getRandomTetrominoType } from '../helpers/gameFunctions.js';
+import { GameStateEnumeration, CellStateEnumeration } from '../tetrominos/types.js';
+import { createEmptyData, createTetromino, getRandomTetrominoType, getTetrominoShapes, getWallkickOffsets } from '../helpers/gameFunctions.js';
 
 // Types
 import type { IService } from './infrastructure/serviceTypes.js';
@@ -19,6 +19,7 @@ export interface ITetrominosGameService extends IService {
   moveLeft: () => void;
   moveRight: () => void;
   moveDown: () => void;
+  rotate: () => void;
   onGameBoardUpdated: (contextKey: string, callbackHandler: GameBoardUpdatedCallbackMethod) => string;
   offGameBoardUpdated: (registerKey: string) => boolean;
 };
@@ -109,6 +110,33 @@ export class TetrominosGameService extends Service implements ITetrominosGameSer
     }
   };
 
+  public rotate = () => {
+    const tetromino = this.gameData.activeTetromino;
+    if (!tetromino) return;
+
+    const from = tetromino.rotation;
+    const to = (from + 1) % 4;
+    const shapes = getTetrominoShapes(tetromino.type);
+    const newShape = shapes[to];
+
+    const wallkicks = getWallkickOffsets(tetromino.type, from, to);
+
+    for (const [dx, dy] of wallkicks) {
+      const testX = tetromino.x + dx;
+      const testY = tetromino.y + dy;
+      const testTetromino = { ...tetromino, shape: newShape, rotation: to, x: testX, y: testY };
+      if (this.canMove(testTetromino, testX, testY)) {
+        tetromino.shape = newShape;
+        tetromino.rotation = to;
+        tetromino.x = testX;
+        tetromino.y = testY;
+        this.notifyGameBoardUpdated();
+        return;
+      }
+    }
+    // No rotation if all kicks failed
+  };
+
   public onGameBoardUpdated = (contextKey: string, callbackHandler: GameBoardUpdatedCallbackMethod) => {
 
     // Setup register key
@@ -180,7 +208,7 @@ export class TetrominosGameService extends Service implements ITetrominosGameSer
       this.gameData.activeTetromino = tetromino;
     } else {
       this.lockTetromino(tetromino);
-      // this.clearFullLines();
+      this.clearFullLines();
       this.spawnTetromino();
     }
 
@@ -246,6 +274,64 @@ export class TetrominosGameService extends Service implements ITetrominosGameSer
     }
 
     this.gameData.activeTetromino = null;
+  };
+
+  private clearFullLines = () => {
+
+    const board = this.gameData.board;
+    const fullRows: number[] = [];
+
+    // Find all full rows
+    for (let y = 0; y < board.length; y++) {
+      if (board[y].every(cell => cell.value)) {
+        fullRows.push(y);
+
+        // Mark cells for blink effect
+        for (let x = 0; x < board[y].length; x++) {
+          board[y][x].state = CellStateEnumeration.Blink;
+        }
+      }
+    }
+
+    if (fullRows.length === 0) return;
+
+    // Update UI to show blink effect
+    this.notifyGameBoardUpdated();
+
+    // Delay to show the blink effect
+    setTimeout(() => {
+
+      // Clear full rows and shift the board down
+      let linesCleared = 0;
+      const newBoard: Board = [];
+
+      for (let y = 0; y < board.length; y++) {
+        if (fullRows.includes(y)) {
+          linesCleared++;
+        } else {
+          newBoard.push(board[y]);
+        }
+      }
+
+      while (newBoard.length < board.length) {
+        newBoard.unshift(Array.from({ length: board[0].length }, () => ({
+          state: CellStateEnumeration.Empty,
+          value: null,
+          color: null,
+        })));
+      }
+
+      this.gameData.board = newBoard;
+
+      if (linesCleared === 1) this.gameData.singles++;
+      if (linesCleared === 2) this.gameData.doubles++;
+      if (linesCleared === 3) this.gameData.triples++;
+      if (linesCleared === 4) this.gameData.tetrises++;
+
+      this.gameData.lines += linesCleared;
+
+      this.notifyGameBoardUpdated();
+    }, 300); // Effect duration
   };
 
   private setGameState = (newState: GameStateEnumeration) => {

@@ -16,7 +16,8 @@ export const CellStateEnumeration = {
     Active: 1,
     Fixed: 2,
     Ghost: 3,
-    Garbage: 4
+    Blink: 4, // For full lines before clearing
+    Garbage: 5 // For garbage lines in multiplayer modes
 };
 export type CellStateEnumeration = typeof CellStateEnumeration[keyof typeof CellStateEnumeration];
 
@@ -68,6 +69,10 @@ export interface GameData {
     score: number;
     level: number;
     lines: number;
+    singles: number;
+    doubles: number;
+    triples: number;
+    tetrises: number;
     state: GameStateEnumeration;
     settings: GameSettings;
     version: number;
