@@ -1,5 +1,3 @@
-import { BOARD_WIDTH } from './constants.js';
-
 // Types
 import type { TetrominoType, TetrominoShape, Tetromino, TetrominoColor } from "./types.js";
 
@@ -198,20 +196,4 @@ export const TETROMINO_COLORS: Record<TetrominoType, TetrominoColor> = {
     Z: '#f00000', // Red
     J: '#0000f0', // Blue
     L: '#f0a000', // Orange
-};
-
-export function getRandomTetrominoType(): TetrominoType {
-    const types: TetrominoType[] = ['I', 'O', 'T', 'S', 'Z', 'J', 'L'];
-    return types[Math.floor(Math.random() * types.length)];
-};
-
-export function createTetromino(type: TetrominoType): Tetromino {
-    return {
-        type,
-        shape: TETROMINO_SHAPES[type][0],
-        color: TETROMINO_COLORS[type],
-        rotation: 0,
-        x: Math.floor((BOARD_WIDTH - 4) / 2),
-        y: 0,
-    };
 };

@@ -2,32 +2,12 @@ import React, { useContext, useState, useRef, useEffect } from 'react';
 import { Box } from '@mui/material';
 import { AppContext, SettingKeys } from '../components/infrastructure/AppContextProvider.js';
 import { ServiceKeys } from './../services/serviceKeys.js';
-import { GameStateEnumeration, createEmptyData } from '../tetrominos/types.js';
 import { BOARD_HEIGHT, VISIBLE_BOARD_HEIGHT, BOARD_WIDTH, HIDDEN_ROWS } from '../tetrominos/constants.js';
+import { createEmptyData, isTetrominoCell } from '../helpers/gameFunctions.js';
 
 // Types
 import type { GameData, Cell, Tetromino, TetrominoType } from "../tetrominos/types.js";
 import type { ITetrominosGameService } from '../services/tetrominosGameService.ts';
-
-function isTetrominoCell(
-  tetromino: Tetromino | null,
-  cellRow: number,
-  cellCol: number
-): { value: TetrominoType, color: string } | null {
-  if (!tetromino) return null;
-  for (let y = 0; y < 4; y++) {
-    for (let x = 0; x < 4; x++) {
-      if (tetromino.shape[y][x]) {
-        const boardY = tetromino.y + y - HIDDEN_ROWS;
-        const boardX = tetromino.x + x;
-        if (boardY === cellRow && boardX === cellCol) {
-          return { value: tetromino.type, color: tetromino.color };
-        }
-      }
-    }
-  }
-  return null;
-};
 
 interface ILocalProps {
 
@@ -43,9 +23,6 @@ export const GameBoard: React.FC<Props> = (props) => {
   // States
   const [gameDataVersion, setGameDataVersion] = useState(0);
   const [cellSize, setCellSize] = useState(32);
-
-  // const gameDataRef = useRef<GameData>(gameData);
-  // gameDataRef.current = gameData;
 
   // Effects
   useEffect(() => {
@@ -76,6 +53,33 @@ export const GameBoard: React.FC<Props> = (props) => {
     return () => {
       tetrominosGameService.offGameBoardUpdated(key);
     };
+  }, [tetrominosGameService]);
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+
+      if (!tetrominosGameService)
+        return;
+
+      switch (event.key) {
+        case "ArrowLeft":
+          tetrominosGameService.moveLeft();
+          break;
+        case "ArrowRight":
+          tetrominosGameService.moveRight();
+          break;
+        case "ArrowDown":
+          tetrominosGameService.moveDown();
+          break;
+        // case "ArrowUp":
+        //   tetrominosGameService.rotate();
+        //   break;
+        // case "Space": // Für Hard-Drop später
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => window.removeEventListener("keydown", handleKeyDown);
   }, [tetrominosGameService]);
 
   const boardWidthPx = cellSize * BOARD_WIDTH;

@@ -71,35 +71,4 @@ export interface GameData {
     state: GameStateEnumeration;
     settings: GameSettings;
     version: number;
-}
-
-export function createEmptyData(boardHeight: number, boardWidth: number): GameData {
-    return {
-        board: createEmptyBoard(boardHeight, boardWidth),
-        activeTetromino: null,
-        nextTetromino: null,
-        holdTetromino: null,
-        canHold: true,
-        score: 0,
-        level: 1,
-        lines: 0,
-        state: GameStateEnumeration.Init,
-        settings: {
-            controlMode: 'keyboard',
-            showGhostPiece: true,
-            boardWidth: boardWidth,
-            boardHeight: boardHeight
-        },
-        version: 0
-    };
-};
-
-export function createEmptyBoard(height: number, width: number): Board {
-    return Array.from({ length: height }, () =>
-        Array.from({ length: width }, () => ({
-            state: CellStateEnumeration.Empty,
-            value: null,
-            color: null
-        }))
-    );
 };

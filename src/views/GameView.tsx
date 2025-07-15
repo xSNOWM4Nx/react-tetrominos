@@ -20,8 +20,6 @@ const GameViewMemoized: React.FC<Props> = (props) => {
   // Contexts
   const appContext = useContext(AppContext);
 
-  let useButtons = true;
-
   return (
 
     <Box
@@ -47,7 +45,7 @@ const GameViewMemoized: React.FC<Props> = (props) => {
           sx={{
             height: '100%',
             flex: '0 0 200px',
-            display: useButtons ? 'flex' : 'none',
+            display: 'flex',
             backgroundColor: 'green'
           }}>
 

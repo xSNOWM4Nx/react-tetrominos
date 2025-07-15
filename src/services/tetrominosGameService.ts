@@ -1,7 +1,7 @@
 import { Service } from './infrastructure/service.js';
 import { BOARD_HEIGHT, BOARD_WIDTH } from '../tetrominos/constants.js';
-import { GameStateEnumeration, createEmptyData } from '../tetrominos/types.js';
-import { getRandomTetrominoType, createTetromino } from '../tetrominos/tetrominos.ts';
+import { GameStateEnumeration } from '../tetrominos/types.js';
+import { createEmptyData, createTetromino, getRandomTetrominoType } from '../helpers/gameFunctions.js';
 
 // Types
 import type { IService } from './infrastructure/serviceTypes.js';
@@ -15,7 +15,10 @@ export interface ITetrominosGameService extends IService {
   startGame: () => void;
   resumeGame: () => void;
   pauseGame: () => void;
-  stopGame?: () => void;
+  stopGame: () => void;
+  moveLeft: () => void;
+  moveRight: () => void;
+  moveDown: () => void;
   onGameBoardUpdated: (contextKey: string, callbackHandler: GameBoardUpdatedCallbackMethod) => string;
   offGameBoardUpdated: (registerKey: string) => boolean;
 };
@@ -79,6 +82,30 @@ export class TetrominosGameService extends Service implements ITetrominosGameSer
     if (this.rafHandle !== null) {
       cancelAnimationFrame(this.rafHandle);
       this.rafHandle = null;
+    }
+  };
+
+  public moveLeft = () => {
+    const tetromino = this.gameData.activeTetromino;
+    if (tetromino && this.canMove(tetromino, tetromino.x - 1, tetromino.y)) {
+      tetromino.x -= 1;
+      this.notifyGameBoardUpdated();
+    }
+  };
+
+  public moveRight = () => {
+    const tetromino = this.gameData.activeTetromino;
+    if (tetromino && this.canMove(tetromino, tetromino.x + 1, tetromino.y)) {
+      tetromino.x += 1;
+      this.notifyGameBoardUpdated();
+    }
+  };
+
+  public moveDown = () => {
+    const tetromino = this.gameData.activeTetromino;
+    if (tetromino && this.canMove(tetromino, tetromino.x, tetromino.y + 1)) {
+      tetromino.y += 1;
+      this.notifyGameBoardUpdated();
     }
   };
 
