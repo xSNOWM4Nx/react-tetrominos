@@ -19,6 +19,30 @@ body {
   }
 }
 
+@keyframes tetromino-blink {
+  0% {
+    filter: none;
+  }
+
+  20% {
+    filter: brightness(2) grayscale(0.5);
+    background: #fff;
+  }
+
+  60% {
+    filter: brightness(2) grayscale(0.5);
+    background: #fff;
+  }
+
+  100% {
+    filter: none;
+  }
+}
+
+.tetromino-cell-blink {
+  animation: tetromino-blink 0.4s ease-in-out;
+}
+
 .red {
   background: red;
 }

@@ -1,5 +1,5 @@
 import React, { useContext, useState, useRef, useEffect } from 'react';
-import { Box, Card, CardContent } from '@mui/material';
+import { Box, Typography, Card, CardContent } from '@mui/material';
 import { AppContext, SettingKeys } from '../components/infrastructure/AppContextProvider.js';
 import { ServiceKeys } from './../services/serviceKeys.js';
 import { BOARD_HEIGHT, VISIBLE_BOARD_HEIGHT, BOARD_WIDTH, HIDDEN_ROWS } from '../tetrominos/constants.js';
@@ -21,7 +21,33 @@ export const GameStats: React.FC<Props> = (props) => {
   const appContext = useContext(AppContext)
   const tetrominosGameService = appContext.getService<ITetrominosGameService>(ServiceKeys.TetrominosGameService);
 
+  // States
+  const [gameStatsVersion, setGameStatsVersion] = useState(0);
 
+  // Effects
+  useEffect(() => {
+
+    if (!tetrominosGameService)
+      return undefined;
+
+    const key = tetrominosGameService.onGameStatsUpdated("GameStats", (newVersion) => {
+      setGameStatsVersion(newVersion);
+    });
+
+    return () => {
+      tetrominosGameService.offGameStatsUpdated(key);
+    };
+  }, [tetrominosGameService]);
+
+  let level = 0;
+  let lines = 0;
+  let score = 0;
+  if (tetrominosGameService) {
+    const gameData = tetrominosGameService.getGameData();
+    level = gameData.level;
+    lines = gameData.lines;
+    score = gameData.score;
+  }
 
   return (
     <Card
@@ -35,10 +61,25 @@ export const GameStats: React.FC<Props> = (props) => {
 
       <CardContent
         sx={{
-
+          flexGrow: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          alignItems: 'center'
         }}>
 
+        <Typography variant="body1">LEVEL</Typography>
+        <Typography variant="h4">{level}</Typography>
 
+        <Box sx={{ height: 16 }} />
+
+        <Typography variant="body1">LINES</Typography>
+        <Typography variant="h4">{lines}</Typography>
+
+        <Box sx={{ height: 16 }} />
+
+        <Typography variant="body1">SCORE</Typography>
+        <Typography variant="h4">{score}</Typography>
 
       </CardContent >
     </Card >

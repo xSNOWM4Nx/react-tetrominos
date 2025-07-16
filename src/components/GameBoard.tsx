@@ -22,7 +22,7 @@ export const GameBoard: React.FC<Props> = (props) => {
   const tetrominosGameService = appContext.getService<ITetrominosGameService>(ServiceKeys.TetrominosGameService);
 
   // States
-  const [gameDataVersion, setGameDataVersion] = useState(0);
+  const [gameBoardVersion, setGameBoardVersion] = useState(0);
   const [cellSize, setCellSize] = useState(32);
 
   // Effects
@@ -45,8 +45,8 @@ export const GameBoard: React.FC<Props> = (props) => {
     if (!tetrominosGameService)
       return undefined;
 
-    const key = tetrominosGameService.onGameBoardUpdated("GameBoard", (newGameDataVersion) => {
-      setGameDataVersion(newGameDataVersion);
+    const key = tetrominosGameService.onGameBoardUpdated("GameBoard", (newVersion) => {
+      setGameBoardVersion(newVersion);
     });
 
     tetrominosGameService.startGame();
@@ -93,19 +93,27 @@ export const GameBoard: React.FC<Props> = (props) => {
     const defaultErrorColor = "#f0f"; // Default color for error cells
 
     if (activeTetrominoCell !== null) {
-      return activeTetrominoCell.color ?? defaultErrorColor; // Default color for unknown cells
+      return activeTetrominoCell.color ?? defaultErrorColor;
     }
 
     if (boardCell.state === CellStateEnumeration.Blink) {
-      return defaultErrorColor
+      return boardCell.color ?? "fff"
     }
 
     if (boardCell.value) {
       // Return the color of the tetromino type in the cell
-      return boardCell.color ?? defaultErrorColor; // Default color for unknown cells
+      return boardCell.color ?? defaultErrorColor;
     }
 
     return defaultEmptyColor;
+  };
+
+  const getBoxShadow = (cell: Cell): string => {
+
+    if (cell.state === CellStateEnumeration.Blink)
+      return "0 0 8px 4px #fff, 0 0 16px 8px #f0f, 0 0 32px 16px #0ff";
+
+    return "none";
   };
 
   const boardWidthPx = cellSize * BOARD_WIDTH;
@@ -143,6 +151,7 @@ export const GameBoard: React.FC<Props> = (props) => {
             return (
               <Box
                 key={`${rowIdx}-${colIdx}`}
+                className={cell.state === CellStateEnumeration.Blink ? "tetromino-cell-blink" : undefined}
                 sx={(theme) => {
 
                   return {
@@ -152,6 +161,7 @@ export const GameBoard: React.FC<Props> = (props) => {
                     border: "1px solid",
                     borderColor: theme.palette.background.paper,
                     background: getCellColor(tetrominoCell, cell),
+                    boxShadow: getBoxShadow(cell),
                     transition: "background 0.1s"
                   }
                 }}

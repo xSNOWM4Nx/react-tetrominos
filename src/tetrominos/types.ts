@@ -75,5 +75,6 @@ export interface GameData {
     tetrises: number;
     state: GameStateEnumeration;
     settings: GameSettings;
-    version: number;
+    boardVersion: number;
+    statsVersion: number;
 };

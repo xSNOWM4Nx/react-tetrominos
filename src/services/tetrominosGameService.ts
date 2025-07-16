@@ -1,5 +1,6 @@
 import { Service } from './infrastructure/service.js';
 import { BOARD_HEIGHT, BOARD_WIDTH } from '../tetrominos/constants.js';
+import { SCORE_TABLE, DROP_INTERVALS } from '../tetrominos/tetrominos.js';
 import { GameStateEnumeration, CellStateEnumeration } from '../tetrominos/types.js';
 import { createEmptyData, createTetromino, getRandomTetrominoType, getTetrominoShapes, getWallkickOffsets } from '../helpers/gameFunctions.js';
 
@@ -7,21 +8,23 @@ import { createEmptyData, createTetromino, getRandomTetrominoType, getTetrominoS
 import type { IService } from './infrastructure/serviceTypes.js';
 import type { GameData, Board, Tetromino, TetrominoType } from '../tetrominos/types.js';
 
-export type GameBoardUpdatedCallbackMethod = (dataVersion: number) => void;
-interface IGameBoardUpdatedSubscriberDictionary { [key: string]: GameBoardUpdatedCallbackMethod };
+export type GameUpdatedCallbackMethod = (version: number) => void;
+interface IGameBoardUpdatedSubscriberDictionary { [key: string]: GameUpdatedCallbackMethod };
+interface IGameStatsUpdatedSubscriberDictionary { [key: string]: GameUpdatedCallbackMethod };
 
 export interface ITetrominosGameService extends IService {
   getGameData: () => GameData;
   startGame: () => void;
-  resumeGame: () => void;
   pauseGame: () => void;
   stopGame: () => void;
   moveLeft: () => void;
   moveRight: () => void;
   moveDown: () => void;
   rotate: () => void;
-  onGameBoardUpdated: (contextKey: string, callbackHandler: GameBoardUpdatedCallbackMethod) => string;
+  onGameBoardUpdated: (contextKey: string, callbackHandler: GameUpdatedCallbackMethod) => string;
   offGameBoardUpdated: (registerKey: string) => boolean;
+  onGameStatsUpdated: (contextKey: string, callbackHandler: GameUpdatedCallbackMethod) => string;
+  offGameStatsUpdated: (registerKey: string) => boolean;
 };
 
 export class TetrominosGameService extends Service implements ITetrominosGameService {
@@ -29,6 +32,8 @@ export class TetrominosGameService extends Service implements ITetrominosGameSer
   // Props
   private gameBoardUpdatedSubscriberDictionary: IGameBoardUpdatedSubscriberDictionary = {};
   private gameBoardUpdatedSubscriptionCounter: number = 0;
+  private gameStatsUpdatedSubscriberDictionary: IGameStatsUpdatedSubscriberDictionary = {};
+  private gameStatsUpdatedSubscriptionCounter: number = 0;
 
   // Game state
   private gameData: GameData;
@@ -47,33 +52,44 @@ export class TetrominosGameService extends Service implements ITetrominosGameSer
 
   public startGame = () => {
 
-    if (this.gameData.state !== GameStateEnumeration.Init &&
-      this.gameData.state !== GameStateEnumeration.Stopped) {
-      console.warn('Game is already running or paused.');
+    // Restart ?
+    if (this.gameData.state === GameStateEnumeration.Running) {
       return;
     }
 
-    this.setGameState(GameStateEnumeration.Running);
+    // Resume
+    if (this.gameData.state === GameStateEnumeration.Paused) {
+      this.setGameState(GameStateEnumeration.Running);
+      this.lastStepTimestamp = performance.now();
+      this.runGameLoop();
+      return;
+    }
 
-    this.lastStepTimestamp = performance.now();
+    if (this.gameData.state !== GameStateEnumeration.Init &&
+      this.gameData.state !== GameStateEnumeration.Stopped) {
+      return;
+    }
+
+    this.gameData = createEmptyData(BOARD_HEIGHT, BOARD_WIDTH);
+    this.notifyGameStatsUpdated();
+
+    this.setGameState(GameStateEnumeration.Running);
     this.spawnTetromino();
-    this.runGameLoop();
-  };
-
-  public resumeGame = () => {
-
-    if (this.gameData.state !== GameStateEnumeration.Paused) return;
-
-    this.setGameState(GameStateEnumeration.Running);
     this.lastStepTimestamp = performance.now();
     this.runGameLoop();
   };
 
   public pauseGame = () => {
 
-    if (this.gameData.state !== GameStateEnumeration.Running) return;
+    if (this.gameData.state !== GameStateEnumeration.Running)
+      return;
 
     this.setGameState(GameStateEnumeration.Paused);
+
+    if (this.rafHandle !== null) {
+      cancelAnimationFrame(this.rafHandle);
+      this.rafHandle = null;
+    }
   };
 
   public stopGame = () => {
@@ -137,7 +153,7 @@ export class TetrominosGameService extends Service implements ITetrominosGameSer
     // No rotation if all kicks failed
   };
 
-  public onGameBoardUpdated = (contextKey: string, callbackHandler: GameBoardUpdatedCallbackMethod) => {
+  public onGameBoardUpdated = (contextKey: string, callbackHandler: GameUpdatedCallbackMethod) => {
 
     // Setup register key
     this.gameBoardUpdatedSubscriptionCounter++;
@@ -162,6 +178,35 @@ export class TetrominosGameService extends Service implements ITetrominosGameSer
     else {
 
       console.error(`Component with key '${registerKey}' not registered on 'GameBoardUpdated'.`);
+      return false;
+    };
+  };
+
+  public onGameStatsUpdated = (contextKey: string, callbackHandler: GameUpdatedCallbackMethod) => {
+
+    // Setup register key
+    this.gameStatsUpdatedSubscriptionCounter++;
+    const registerKey = `${contextKey}_${this.gameStatsUpdatedSubscriptionCounter}`
+
+    // Register callback
+    this.gameStatsUpdatedSubscriberDictionary[registerKey] = callbackHandler;
+    console.debug(`Component with key '${registerKey}' has subscribed on 'GameStatsUpdated'.`);
+    return registerKey;
+  };
+
+  public offGameStatsUpdated = (registerKey: string) => {
+
+    // Delete callback
+    var existingSubscriber = Object.entries(this.gameStatsUpdatedSubscriberDictionary).find(([key, value]) => key === registerKey);
+    if (existingSubscriber) {
+
+      delete this.gameStatsUpdatedSubscriberDictionary[registerKey];
+      console.debug(`Component with key '${registerKey}' has unsubscribed on 'GameStatsUpdated'.`);
+      return true;
+    }
+    else {
+
+      console.error(`Component with key '${registerKey}' not registered on 'GameStatsUpdated'.`);
       return false;
     };
   };
@@ -265,7 +310,7 @@ export class TetrominosGameService extends Service implements ITetrominosGameSer
           boardX < BOARD_WIDTH
         ) {
           this.gameData.board[boardY][boardX] = {
-            state: 2, // CellStateEnumeration.Fixed,
+            state: CellStateEnumeration.Fixed,
             value: tetromino.type,
             color: tetromino.color,
           };
@@ -323,14 +368,19 @@ export class TetrominosGameService extends Service implements ITetrominosGameSer
 
       this.gameData.board = newBoard;
 
+      // Count lines cleared
       if (linesCleared === 1) this.gameData.singles++;
       if (linesCleared === 2) this.gameData.doubles++;
       if (linesCleared === 3) this.gameData.triples++;
       if (linesCleared === 4) this.gameData.tetrises++;
-
       this.gameData.lines += linesCleared;
 
+      // Update score
+      const points = SCORE_TABLE[linesCleared] * (this.gameData.level + 1);
+      this.gameData.score += points;
+
       this.notifyGameBoardUpdated();
+      this.notifyGameStatsUpdated();
     }, 300); // Effect duration
   };
 
@@ -340,7 +390,20 @@ export class TetrominosGameService extends Service implements ITetrominosGameSer
 
   private notifyGameBoardUpdated = () => {
 
-    this.gameData.version++;
-    Object.values(this.gameBoardUpdatedSubscriberDictionary).forEach(cb => cb(this.gameData.version));
+    this.gameData.boardVersion++;
+    Object.values(this.gameBoardUpdatedSubscriberDictionary).forEach(cb => cb(this.gameData.boardVersion));
+  };
+
+  private notifyGameStatsUpdated = () => {
+
+    // Check for level up
+    if (this.gameData.lines >= (this.gameData.level + 1) * 10)
+      this.gameData.level++;
+
+    // Update step delay based on level
+    this.stepDelay = DROP_INTERVALS[Math.min(this.gameData.level, DROP_INTERVALS.length - 1)];
+
+    this.gameData.statsVersion++;
+    Object.values(this.gameStatsUpdatedSubscriberDictionary).forEach(cb => cb(this.gameData.statsVersion));
   };
 };

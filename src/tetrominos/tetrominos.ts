@@ -221,3 +221,39 @@ export const SRS_WALLKICKS_I: { [key: string]: [number, number][] } = {
     "L>0": [[0, 0], [1, 0], [-2, 0], [1, -2], [-2, 1]],
     "0>L": [[0, 0], [-1, 0], [2, 0], [-1, 2], [2, -1]],
 };
+
+// Index = number of lines cleared
+export const SCORE_TABLE = [0, 100, 300, 500, 800];
+
+export const DROP_INTERVALS = [
+    800,  // Level 0
+    717,  // Level 1
+    633,  // Level 2
+    550,  // Level 3
+    467,  // Level 4
+    383,  // Level 5
+    300,  // Level 6
+    217,  // Level 7
+    133,  // Level 8
+    100,  // Level 9
+    83,  // Level 10
+    83,  // Level 11
+    83,  // Level 12
+    67,  // Level 13
+    67,  // Level 14
+    67,  // Level 15
+    50,  // Level 16
+    50,  // Level 17
+    50,  // Level 18
+    33,  // Level 19
+    33,  // Level 20
+    33,  // Level 21
+    33,  // Level 22
+    33,  // Level 23
+    33,  // Level 24
+    33,  // Level 25
+    33,  // Level 26
+    33,  // Level 27
+    33,  // Level 28
+    17,  // Level 29+
+];

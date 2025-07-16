@@ -13,7 +13,7 @@ export function createEmptyData(boardHeight: number, boardWidth: number): GameDa
     holdTetromino: null,
     canHold: true,
     score: 0,
-    level: 1,
+    level: 0,
     lines: 0,
     singles: 0,
     doubles: 0,
@@ -26,7 +26,8 @@ export function createEmptyData(boardHeight: number, boardWidth: number): GameDa
       boardWidth: boardWidth,
       boardHeight: boardHeight
     },
-    version: 0
+    boardVersion: 0,
+    statsVersion: 0
   };
 };
 
