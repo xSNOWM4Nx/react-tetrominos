@@ -19,6 +19,7 @@ export function createEmptyData(boardHeight: number, boardWidth: number): GameDa
     doubles: 0,
     triples: 0,
     tetrises: 0,
+    time: 0, // in seconds
     state: GameStateEnumeration.Init,
     settings: {
       controlMode: 'keyboard',
@@ -26,6 +27,7 @@ export function createEmptyData(boardHeight: number, boardWidth: number): GameDa
       boardWidth: boardWidth,
       boardHeight: boardHeight
     },
+    stateVersion: 0,
     boardVersion: 0,
     statsVersion: 0
   };

@@ -73,8 +73,10 @@ export interface GameData {
     doubles: number;
     triples: number;
     tetrises: number;
+    time: number; // in seconds
     state: GameStateEnumeration;
     settings: GameSettings;
+    stateVersion: number;
     boardVersion: number;
     statsVersion: number;
 };

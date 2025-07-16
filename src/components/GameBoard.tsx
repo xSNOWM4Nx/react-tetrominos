@@ -1,9 +1,9 @@
-import React, { useContext, useState, useRef, useEffect } from 'react';
+import React, { useContext, useState, useEffect } from 'react';
 import { Box } from '@mui/material';
-import { AppContext, SettingKeys } from '../components/infrastructure/AppContextProvider.js';
+import { AppContext } from '../components/infrastructure/AppContextProvider.js';
 import { ServiceKeys } from './../services/serviceKeys.js';
-import { BOARD_HEIGHT, VISIBLE_BOARD_HEIGHT, BOARD_WIDTH, HIDDEN_ROWS } from '../tetrominos/constants.js';
-import { GameStateEnumeration, CellStateEnumeration } from '../tetrominos/types.js';
+import { VISIBLE_BOARD_HEIGHT, BOARD_WIDTH, HIDDEN_ROWS } from '../tetrominos/constants.js';
+import { CellStateEnumeration } from '../tetrominos/types.js';
 import { createEmptyData, isTetrominoCell } from '../helpers/gameFunctions.js';
 
 // Types
@@ -48,8 +48,6 @@ export const GameBoard: React.FC<Props> = (props) => {
     const key = tetrominosGameService.onGameBoardUpdated("GameBoard", (newVersion) => {
       setGameBoardVersion(newVersion);
     });
-
-    tetrominosGameService.startGame();
 
     return () => {
       tetrominosGameService.offGameBoardUpdated(key);
@@ -111,7 +109,7 @@ export const GameBoard: React.FC<Props> = (props) => {
   const getBoxShadow = (cell: Cell): string => {
 
     if (cell.state === CellStateEnumeration.Blink)
-      return "0 0 8px 4px #fff, 0 0 16px 8px #f0f, 0 0 32px 16px #0ff";
+      return "0 0 4px 2px #fff, 0 0 8px 4px #f0f, 0 0 16px 8px #0ff";
 
     return "none";
   };
@@ -135,12 +133,17 @@ export const GameBoard: React.FC<Props> = (props) => {
       }}>
 
       <Box
-        sx={{
-          display: 'grid',
-          gridTemplateRows: `repeat(${VISIBLE_BOARD_HEIGHT}, ${cellSize}px)`,
-          gridTemplateColumns: `repeat(${BOARD_WIDTH}, ${cellSize}px)`,
-          width: boardWidthPx,
-          height: boardHeightPx,
+        sx={theme => {
+
+          return {
+            display: 'grid',
+            gridTemplateRows: `repeat(${VISIBLE_BOARD_HEIGHT}, ${cellSize}px)`,
+            gridTemplateColumns: `repeat(${BOARD_WIDTH}, ${cellSize}px)`,
+            width: boardWidthPx,
+            height: boardHeightPx,
+            border: "1px solid",
+            borderColor: theme.palette.background.paper,
+          }
         }}>
 
         {board.map((row, rowIdx) =>
@@ -158,8 +161,6 @@ export const GameBoard: React.FC<Props> = (props) => {
                     width: cellSize,
                     height: cellSize,
                     boxSizing: "border-box",
-                    border: "1px solid",
-                    borderColor: theme.palette.background.paper,
                     background: getCellColor(tetrominoCell, cell),
                     boxShadow: getBoxShadow(cell),
                     transition: "background 0.1s"
