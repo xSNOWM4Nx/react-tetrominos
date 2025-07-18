@@ -1,9 +1,9 @@
 import React, { useContext, useState, useEffect } from 'react';
-import { Box } from '@mui/material';
+import { Box, Typography } from '@mui/material';
 import { AppContext } from '../components/infrastructure/AppContextProvider.js';
 import { ServiceKeys } from './../services/serviceKeys.js';
 import { VISIBLE_BOARD_HEIGHT, BOARD_WIDTH, HIDDEN_ROWS } from '../tetrominos/constants.js';
-import { CellStateEnumeration } from '../tetrominos/types.js';
+import { GameStateEnumeration, CellStateEnumeration } from '../tetrominos/types.js';
 import { createEmptyData, isTetrominoCell } from '../helpers/gameFunctions.js';
 
 // Types
@@ -23,6 +23,7 @@ export const GameBoard: React.FC<Props> = (props) => {
 
   // States
   const [gameBoardVersion, setGameBoardVersion] = useState(0);
+  const [gameStateVersion, setGameStateVersion] = useState(0);
   const [cellSize, setCellSize] = useState(32);
 
   // Effects
@@ -45,12 +46,16 @@ export const GameBoard: React.FC<Props> = (props) => {
     if (!tetrominosGameService)
       return undefined;
 
-    const key = tetrominosGameService.onGameBoardUpdated("GameBoard", (newVersion) => {
+    const gameBordUpdateKey = tetrominosGameService.onGameBoardUpdated("GameBoard", (newVersion) => {
       setGameBoardVersion(newVersion);
+    });
+    const gameStateUpdateKey = tetrominosGameService.onGameStateUpdated("GameBoard", (newVersion) => {
+      setGameStateVersion(newVersion);
     });
 
     return () => {
-      tetrominosGameService.offGameBoardUpdated(key);
+      tetrominosGameService.offGameBoardUpdated(gameBordUpdateKey);
+      tetrominosGameService.offGameStateUpdated(gameStateUpdateKey);
     };
   }, [tetrominosGameService]);
   useEffect(() => {
@@ -114,6 +119,91 @@ export const GameBoard: React.FC<Props> = (props) => {
     return "none";
   };
 
+  const renderPauseOverlay = () => {
+
+    if (gameData.state !== GameStateEnumeration.Paused)
+      return null;
+
+    return (
+      <Box
+        id="pause-overlay"
+        sx={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: boardWidthPx,
+          height: boardHeightPx,
+          pointerEvents: 'none',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 2,
+        }}>
+
+        <Box
+          sx={(theme) => {
+
+            return {
+              width: '70%',
+              height: 200,
+              backgroundColor: theme.palette.primary.main,
+              borderRadius: 2,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              textAlign: 'center',
+            }
+          }}>
+
+          <Typography
+            variant="h2">
+            PAUSED
+          </Typography>
+        </Box>
+      </Box>
+    )
+  };
+
+  const renderGameOverOverlay = () => {
+    if (gameData.state !== GameStateEnumeration.GameOver)
+      return null;
+
+    return (
+      <Box
+        id="gameover-overlay"
+        sx={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: boardWidthPx,
+          height: boardHeightPx,
+          pointerEvents: 'none',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 2,
+        }}>
+
+        <Box
+          sx={theme => ({
+            width: '70%',
+            height: 200,
+            backgroundColor: theme.palette.error.main,
+            borderRadius: 2,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            textAlign: 'center',
+          })}>
+          <Typography
+            variant="h2">
+            GAME OVER
+          </Typography>
+        </Box>
+      </Box>
+    )
+  };
+
   const boardWidthPx = cellSize * BOARD_WIDTH;
   const boardHeightPx = cellSize * VISIBLE_BOARD_HEIGHT;
   const gameData = tetrominosGameService ? tetrominosGameService.getGameData() : createEmptyData(VISIBLE_BOARD_HEIGHT, BOARD_WIDTH);
@@ -130,6 +220,7 @@ export const GameBoard: React.FC<Props> = (props) => {
         boxShadow: 3,
         overflow: 'hidden',
         userSelect: 'none',
+        position: 'relative' // Ensure the overlays are positioned correctly
       }}>
 
       <Box
@@ -173,6 +264,8 @@ export const GameBoard: React.FC<Props> = (props) => {
 
       </Box>
 
+      {renderPauseOverlay()}
+      {renderGameOverOverlay()}
     </Box>
   );
 }

@@ -9,7 +9,7 @@ export function createEmptyData(boardHeight: number, boardWidth: number): GameDa
   return {
     board: createEmptyBoard(boardHeight, boardWidth),
     activeTetromino: null,
-    nextTetromino: null,
+    nextTetromino: createTetromino(getRandomTetrominoType()),
     holdTetromino: null,
     canHold: true,
     score: 0,
@@ -19,7 +19,8 @@ export function createEmptyData(boardHeight: number, boardWidth: number): GameDa
     doubles: 0,
     triples: 0,
     tetrises: 0,
-    time: 0, // in seconds
+    timeTicks: 0,
+    timeSeconds: 0,
     state: GameStateEnumeration.Init,
     settings: {
       controlMode: 'keyboard',

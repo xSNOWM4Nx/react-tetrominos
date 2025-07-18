@@ -1,5 +1,5 @@
 import React, { useContext, useState, useRef, useEffect } from 'react';
-import { Box, Card, CardContent, Button } from '@mui/material';
+import { Box, Divider, Typography, Card, CardContent, Button, Fab } from '@mui/material';
 import { AppContext, SettingKeys } from '../components/infrastructure/AppContextProvider.js';
 import { ServiceKeys } from './../services/serviceKeys.js';
 import { BOARD_HEIGHT, VISIBLE_BOARD_HEIGHT, BOARD_WIDTH, HIDDEN_ROWS } from '../tetrominos/constants.js';
@@ -9,6 +9,13 @@ import { createEmptyData, isTetrominoCell } from '../helpers/gameFunctions.js';
 // Types
 import type { GameData, Cell, Tetromino, TetrominoType } from "../tetrominos/types.js";
 import type { ITetrominosGameService } from '../services/tetrominosGameService.ts';
+
+// Icons
+import KeyboardArrowLeftIcon from '@mui/icons-material/KeyboardArrowLeft';
+import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
+import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
+import RotateRightIcon from '@mui/icons-material/RotateRight';
+import KeyboardDoubleArrowDownIcon from '@mui/icons-material/KeyboardDoubleArrowDown';
 
 interface ILocalProps {
 
@@ -41,6 +48,16 @@ export const GameControl: React.FC<Props> = (props) => {
       tetrominosGameService.offGameStateUpdated(key);
     };
   }, [tetrominosGameService]);
+
+  const renderDivider = () => {
+    return (
+      <React.Fragment>
+        <Box sx={{ height: 16 }} />
+        <Divider sx={{ width: '100%' }} />
+        <Box sx={{ height: 16 }} />
+      </React.Fragment>
+    );
+  };
 
   const renderStartButton = () => {
 
@@ -112,6 +129,165 @@ export const GameControl: React.FC<Props> = (props) => {
     );
   };
 
+  const renderButtonControls = () => {
+
+    if (!tetrominosGameService)
+      return null;
+
+    return (
+      <Box
+        sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center'
+        }}>
+
+        <Box sx={{ height: 16 }} />
+
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 4
+          }}>
+
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: 1
+            }}>
+
+            <Box
+              sx={{
+                display: 'flex',
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 1
+              }}>
+
+              <Fab
+                color='secondary'
+                onClick={() => tetrominosGameService.moveLeft()}>
+                <KeyboardArrowLeftIcon />
+              </Fab>
+
+              <Fab
+                color='secondary'
+                onClick={() => tetrominosGameService.moveRight()}>
+                <KeyboardArrowRightIcon />
+              </Fab>
+
+            </Box>
+
+            <Fab
+              color='secondary'
+              onClick={() => tetrominosGameService.moveDown()}>
+              <KeyboardArrowDownIcon />
+            </Fab>
+
+          </Box>
+
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: 1
+            }}>
+
+            <Fab
+              color='secondary'
+              onClick={() => tetrominosGameService.rotate()}>
+              <RotateRightIcon />
+            </Fab>
+            <Fab
+              color='secondary'>
+              <KeyboardDoubleArrowDownIcon />
+            </Fab>
+
+          </Box>
+
+        </Box>
+
+        <Box sx={{ height: 16 }} />
+
+      </Box>
+    );
+  };
+
+  const renderKeyboardDescription = () => {
+    return (
+      <Box
+        sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'flex-start',
+        }}>
+
+        <Typography variant="subtitle1">Keyboard Controls</Typography>
+
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 1
+          }}>
+          <KeyboardArrowLeftIcon />
+          <Typography variant="body2">Left Arrow, A</Typography>
+        </Box>
+
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 1
+          }}>
+          <KeyboardArrowRightIcon />
+          <Typography variant="body2">Right Arrow, D</Typography>
+        </Box>
+
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 1
+          }}>
+          <KeyboardArrowDownIcon />
+          <Typography variant="body2">Down Arrow, S</Typography>
+        </Box>
+
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 1
+          }}>
+          <RotateRightIcon />
+          <Typography variant="body2">Up Arrow, W</Typography>
+        </Box>
+
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 1
+          }}>
+          <KeyboardDoubleArrowDownIcon />
+          <Typography variant="body2">Spacebar</Typography>
+        </Box>
+
+      </Box>
+    );
+  };
+
   return (
     <Card
       sx={{
@@ -134,6 +310,14 @@ export const GameControl: React.FC<Props> = (props) => {
         {renderStartButton()}
         {renderPauseButton()}
         {renderStopButton()}
+
+        {renderDivider()}
+
+        {renderButtonControls()}
+
+        {renderDivider()}
+
+        {renderKeyboardDescription()}
 
       </CardContent >
     </Card >

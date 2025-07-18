@@ -112,23 +112,23 @@ export const GameStats: React.FC<Props> = (props) => {
     );
   };
 
-  let level = 0;
+  let level = 1;
   let lines = 0;
   let score = 0;
-  let time = 0;
+  let timeSeconds = 0;
   if (tetrominosGameService) {
     const gameData = tetrominosGameService.getGameData();
-    level = gameData.level;
+    level = gameData.level + 1;
     lines = gameData.lines;
     score = gameData.score;
-    time = gameData.time;
+    timeSeconds = gameData.timeSeconds;
   }
 
   // Format time as MM:SS
   let formattedTime = "00:00";
-  if (time > 0) {
-    const minutes = Math.floor(time / 60);
-    const seconds = time % 60;
+  if (timeSeconds > 0) {
+    const minutes = Math.floor(timeSeconds / 60);
+    const seconds = timeSeconds % 60;
     formattedTime = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
   }
 

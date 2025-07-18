@@ -66,20 +66,29 @@ export class TetrominosGameService extends Service implements ITetrominosGameSer
 
     // Resume
     if (this.gameData.state === GameStateEnumeration.Paused) {
+
       this.setGameState(GameStateEnumeration.Running);
       this.lastStepTimestamp = performance.now();
       this.runGameLoop();
+
+      // Reset start timestamp
+      this.gameStartTimestamp = Date.now() - this.gameData.timeTicks;
       this.startTimeInterval();
       return;
+    }
+
+    // After game over
+    if (this.gameData.state === GameStateEnumeration.GameOver) {
+
+      // Clear data
+      this.gameData = createEmptyData(BOARD_HEIGHT, BOARD_WIDTH);
+      this.notifyGameStatsUpdated();
     }
 
     if (this.gameData.state !== GameStateEnumeration.Init &&
       this.gameData.state !== GameStateEnumeration.Stopped) {
       return;
-    }
-
-    this.gameData = createEmptyData(BOARD_HEIGHT, BOARD_WIDTH);
-    this.notifyGameStatsUpdated();
+    };
 
     this.setGameState(GameStateEnumeration.Running);
     this.spawnTetromino();
@@ -98,10 +107,7 @@ export class TetrominosGameService extends Service implements ITetrominosGameSer
     this.setGameState(GameStateEnumeration.Paused);
     clearInterval(this.timeInterval);
 
-    if (this.rafHandle !== null) {
-      cancelAnimationFrame(this.rafHandle);
-      this.rafHandle = null;
-    }
+    this.stopGameLoop();
   };
 
   public stopGame = () => {
@@ -109,10 +115,7 @@ export class TetrominosGameService extends Service implements ITetrominosGameSer
     this.setGameState(GameStateEnumeration.Stopped);
     clearInterval(this.timeInterval);
 
-    if (this.rafHandle !== null) {
-      cancelAnimationFrame(this.rafHandle);
-      this.rafHandle = null;
-    }
+    this.stopGameLoop();
 
     this.gameData = createEmptyData(BOARD_HEIGHT, BOARD_WIDTH);
     this.notifyGameBoardUpdated();
@@ -120,6 +123,10 @@ export class TetrominosGameService extends Service implements ITetrominosGameSer
   };
 
   public moveLeft = () => {
+
+    if (this.gameData.state !== GameStateEnumeration.Running)
+      return;
+
     const tetromino = this.gameData.activeTetromino;
     if (tetromino && this.canMove(tetromino, tetromino.x - 1, tetromino.y)) {
       tetromino.x -= 1;
@@ -128,6 +135,10 @@ export class TetrominosGameService extends Service implements ITetrominosGameSer
   };
 
   public moveRight = () => {
+
+    if (this.gameData.state !== GameStateEnumeration.Running)
+      return;
+
     const tetromino = this.gameData.activeTetromino;
     if (tetromino && this.canMove(tetromino, tetromino.x + 1, tetromino.y)) {
       tetromino.x += 1;
@@ -136,6 +147,10 @@ export class TetrominosGameService extends Service implements ITetrominosGameSer
   };
 
   public moveDown = () => {
+
+    if (this.gameData.state !== GameStateEnumeration.Running)
+      return;
+
     const tetromino = this.gameData.activeTetromino;
     if (tetromino && this.canMove(tetromino, tetromino.x, tetromino.y + 1)) {
       tetromino.y += 1;
@@ -144,6 +159,10 @@ export class TetrominosGameService extends Service implements ITetrominosGameSer
   };
 
   public rotate = () => {
+
+    if (this.gameData.state !== GameStateEnumeration.Running)
+      return;
+
     const tetromino = this.gameData.activeTetromino;
     if (!tetromino) return;
 
@@ -286,6 +305,13 @@ export class TetrominosGameService extends Service implements ITetrominosGameSer
     });
   };
 
+  private stopGameLoop = () => {
+    if (this.rafHandle !== null) {
+      cancelAnimationFrame(this.rafHandle);
+      this.rafHandle = null;
+    }
+  };
+
   private stepGame = () => {
 
     const tetromino = this.gameData.activeTetromino;
@@ -310,8 +336,17 @@ export class TetrominosGameService extends Service implements ITetrominosGameSer
     if (!this.gameData.nextTetromino)
       this.gameData.nextTetromino = createTetromino(getRandomTetrominoType());
 
-    this.gameData.activeTetromino = this.gameData.nextTetromino;
+    const newTetromino = this.gameData.nextTetromino;
     this.gameData.nextTetromino = createTetromino(getRandomTetrominoType());
+
+    if (!this.canMove(newTetromino, newTetromino.x, newTetromino.y)) {
+
+      // GAME OVER!
+      this.gameOver();
+      return;
+    }
+
+    this.gameData.activeTetromino = newTetromino;
     this.notifyGameStatsUpdated();
   };
 
@@ -445,11 +480,23 @@ export class TetrominosGameService extends Service implements ITetrominosGameSer
 
     this.timeInterval = setInterval(() => {
 
-      this.gameData.time = Date.now() - this.gameStartTimestamp;
-      this.gameData.time = Math.floor(this.gameData.time / 1000); // Convert to seconds
+      this.gameData.timeTicks = Date.now() - this.gameStartTimestamp;
+      this.gameData.timeSeconds = Math.floor(this.gameData.timeTicks / 1000); // Convert to seconds
       this.notifyGameStatsUpdated();
 
     }, 1000);
+  };
+
+  private gameOver = () => {
+
+    this.setGameState(GameStateEnumeration.GameOver);
+    clearInterval(this.timeInterval);
+
+    this.stopGameLoop();
+
+    this.gameData.activeTetromino = null; // No active tetromino
+    this.notifyGameBoardUpdated();
+    this.notifyGameStatsUpdated();
   };
 
   private notifyGameBoardUpdated = () => {
