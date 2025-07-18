@@ -79,7 +79,8 @@ const App: React.FC = () => {
 
   return (
 
-    <BrowserRouter>
+    <BrowserRouter
+      basename="/react-tetrominos">
       <ThemeProvider
         theme={getTheme()}>
 

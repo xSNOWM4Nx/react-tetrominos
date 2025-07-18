@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { Box, Fab } from '@mui/material';
 import { useNavigation } from '../components/infrastructure/NavigationProvider.js';
@@ -24,15 +24,10 @@ const RouterPage: React.FC<Props> = (props) => {
   const contextName: string = 'RouterPage'
 
   // Hooks
-  const { navigateByKey } = useNavigation();
+  const { navigateByKey, currentViewElement } = useNavigation();
 
   // States
   const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
-
-  // Effects
-  useEffect(() => {
-    navigateByKey(ViewKeys.GameView);
-  }, []);
 
   const handleMenuButtonClick = (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
     setMenuAnchor(menuAnchor ? null : e.currentTarget);
