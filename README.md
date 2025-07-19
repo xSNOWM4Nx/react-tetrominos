@@ -5,6 +5,8 @@ The goal of the project is to create a Tetris clone as close as possible to the 
 
 [![JavaScript Style Guide](https://img.shields.io/badge/code_style-standard-brightgreen.svg)](https://standardjs.com)
 
+![](docs/react-tetrominos_prview.gif)
+
 ## 🎮 Try it
 [DEMO](https://xsnowm4nx.github.io/react-tetrominos/)
 
