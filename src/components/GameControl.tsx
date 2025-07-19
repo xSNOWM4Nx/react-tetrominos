@@ -204,7 +204,8 @@ export const GameControl: React.FC<Props> = (props) => {
               <RotateRightIcon />
             </Fab>
             <Fab
-              color='secondary'>
+              color='secondary'
+              onClick={() => tetrominosGameService.hardDrop()}>
               <KeyboardDoubleArrowDownIcon />
             </Fab>
 

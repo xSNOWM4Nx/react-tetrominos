@@ -225,6 +225,9 @@ export const SRS_WALLKICKS_I: { [key: string]: [number, number][] } = {
 // Index = number of lines cleared
 export const SCORE_TABLE = [0, 100, 300, 500, 800];
 
+export const SOFT_DROP_SCORE = 1;
+export const HARD_DROP_SCORE = 2;
+
 export const DROP_INTERVALS = [
     800,  // Level 0
     717,  // Level 1

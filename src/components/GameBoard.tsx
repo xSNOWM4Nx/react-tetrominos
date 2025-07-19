@@ -67,21 +67,29 @@ export const GameBoard: React.FC<Props> = (props) => {
       switch (event.key) {
         case "ArrowLeft":
         case "a":
+          event.preventDefault();
           tetrominosGameService.moveLeft();
           break;
         case "ArrowRight":
         case "d":
+          event.preventDefault();
           tetrominosGameService.moveRight();
           break;
         case "ArrowDown":
         case "s":
+          event.preventDefault();
           tetrominosGameService.moveDown();
           break;
         case "ArrowUp":
         case "w":
+          event.preventDefault();
           tetrominosGameService.rotate();
           break;
-        // case "Space": // Hard-Drop
+        case "Space":
+        case " ":
+          event.preventDefault();
+          tetrominosGameService.hardDrop();
+          break;
       }
     };
 

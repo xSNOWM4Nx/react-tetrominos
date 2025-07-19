@@ -1,6 +1,6 @@
 import { Service } from './infrastructure/service.js';
 import { BOARD_HEIGHT, BOARD_WIDTH } from '../tetrominos/constants.js';
-import { SCORE_TABLE, DROP_INTERVALS } from '../tetrominos/tetrominos.js';
+import { SCORE_TABLE, DROP_INTERVALS, HARD_DROP_SCORE, SOFT_DROP_SCORE } from '../tetrominos/tetrominos.js';
 import { GameStateEnumeration, CellStateEnumeration } from '../tetrominos/types.js';
 import { createEmptyData, createTetromino, getRandomTetrominoType, getTetrominoShapes, getWallkickOffsets } from '../helpers/gameFunctions.js';
 
@@ -22,6 +22,7 @@ export interface ITetrominosGameService extends IService {
   moveRight: () => void;
   moveDown: () => void;
   rotate: () => void;
+  hardDrop: () => void;
   onGameStateUpdated: (contextKey: string, callbackHandler: GameUpdatedCallbackMethod) => string;
   offGameStateUpdated: (registerKey: string) => boolean;
   onGameBoardUpdated: (contextKey: string, callbackHandler: GameUpdatedCallbackMethod) => string;
@@ -153,8 +154,13 @@ export class TetrominosGameService extends Service implements ITetrominosGameSer
 
     const tetromino = this.gameData.activeTetromino;
     if (tetromino && this.canMove(tetromino, tetromino.x, tetromino.y + 1)) {
+
       tetromino.y += 1;
       this.notifyGameBoardUpdated();
+
+      // Add score for soft drop
+      this.gameData.score += SOFT_DROP_SCORE;
+      this.notifyGameStatsUpdated();
     }
   };
 
@@ -187,6 +193,30 @@ export class TetrominosGameService extends Service implements ITetrominosGameSer
       }
     }
     // No rotation if all kicks failed
+  };
+
+  public hardDrop = () => {
+
+    const tetromino = this.gameData.activeTetromino;
+    if (!tetromino)
+      return;
+
+    // Loop until we can't move down anymore
+    let dropDistance = 0;
+    let y = tetromino.y;
+    while (this.canMove(tetromino, tetromino.x, y + 1)) {
+      y += 1;
+      dropDistance++;
+    }
+    tetromino.y = y;
+
+    // Add score for hard drop
+    // Update game stats is done in one of the next methods
+    this.gameData.score += dropDistance * HARD_DROP_SCORE;
+
+    this.lockTetromino(tetromino);
+    this.clearFullLines();
+    this.spawnTetromino();
   };
 
   public onGameStateUpdated = (contextKey: string, callbackHandler: GameUpdatedCallbackMethod) => {
